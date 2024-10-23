@@ -1,0 +1,6 @@
+export enum Status {
+  CREATED = 'CREATED',
+  ACTIVATED = 'ACTIVATED',
+  SUSPENDED = 'SUSPENDED',
+  BLOCKED = 'BLOCKED',
+}
