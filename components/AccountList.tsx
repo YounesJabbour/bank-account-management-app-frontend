@@ -15,17 +15,23 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 interface AccountListProps {
   accounts: Account[];
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
 }
 
-// Pagination settings
-const PAGE_SIZE = 8;
-
-const AccountList = ({ accounts }: AccountListProps) => {
-  const [currentPage, setCurrentPage] = useState(1);
+const AccountList = ({
+  accounts,
+  currentPage,
+  totalPages,
+  totalElements,
+}: AccountListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
 
   // Filter accounts based on search
   const filteredAccounts = accounts.filter(
@@ -35,26 +41,16 @@ const AccountList = ({ accounts }: AccountListProps) => {
       account.status.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredAccounts.length / PAGE_SIZE);
-
-  // Get accounts for current page
-  const currentAccounts = filteredAccounts.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
-
   // Handle page change
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    router.push(`/accounts?page=${page}`);
   };
 
   // Format currency with symbol
   const formatCurrency = (amount: number, currency: string) => {
     const currencyMap: { [key: string]: string } = {
       EURO: 'EUR',
-      POUND: 'GBP',
-      DOLLAR: 'USD',
+      MAD: 'MAD',
     };
 
     const currencyCode = currencyMap[currency] || currency;
@@ -69,12 +65,10 @@ const AccountList = ({ accounts }: AccountListProps) => {
   // Get account type styling
   const getTypeStyle = (type: string) => {
     switch (type) {
-      case 'SAVINGS':
+      case 'CURRENT_ACCOUNT':
         return 'bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors';
-      case 'CHECKING':
+      case 'SAVING_ACCOUNT':
         return 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition-colors';
-      case 'INVESTMENT':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors';
       default:
         return 'bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors';
     }
@@ -125,7 +119,7 @@ const AccountList = ({ accounts }: AccountListProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentAccounts.map((account) => (
+              {filteredAccounts.map((account) => (
                 <TableRow
                   key={account.accountId}
                   className="hover:bg-muted/50 transition-colors"
@@ -162,16 +156,16 @@ const AccountList = ({ accounts }: AccountListProps) => {
 
         <div className="mt-6 flex items-center justify-between px-2">
           <div className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * PAGE_SIZE + 1} to{' '}
-            {Math.min(currentPage * PAGE_SIZE, filteredAccounts.length)} of{' '}
-            {filteredAccounts.length} accounts
+            Showing {currentPage * 10 + 1} to{' '}
+            {Math.min((currentPage + 1) * 10, totalElements)} of {totalElements}{' '}
+            accounts
           </div>
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              disabled={currentPage === 0}
               className="hover:bg-muted"
             >
               Previous
@@ -179,12 +173,12 @@ const AccountList = ({ accounts }: AccountListProps) => {
             <div className="flex gap-2">
               {[...Array(totalPages)].map((_, i) => (
                 <Button
-                  key={i + 1}
-                  variant={currentPage === i + 1 ? 'default' : 'outline'}
+                  key={i}
+                  variant={currentPage === i ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => handlePageChange(i + 1)}
+                  onClick={() => handlePageChange(i)}
                   className={`h-8 w-8 ${
-                    currentPage === i + 1
+                    currentPage === i
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-muted'
                   }`}
@@ -197,7 +191,7 @@ const AccountList = ({ accounts }: AccountListProps) => {
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages - 1}
               className="hover:bg-muted"
             >
               Next

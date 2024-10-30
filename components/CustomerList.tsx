@@ -3,7 +3,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -11,76 +10,64 @@ import {
 import { Customer } from '@/types/Customer';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 interface CustomerListProps {
   customers: Customer[];
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
 }
 
 const operationItems = [
   {
-    title: 'Edit',
-    href: '/customers/edit',
-    className: 'text-blue-500',
-    variant: 'default' as 'default',
+    label: 'Edit',
+    action: (id: string) => `/customers/${id}/edit`,
+    color: 'yellow',
+    variant: 'outline' as
+      | 'default'
+      | 'destructive'
+      | 'outline'
+      | 'secondary'
+      | 'ghost'
+      | 'link'
+      | null,
+    link: '/edit',
   },
   {
-    title: 'Delete',
-    href: '/customers/delete',
-    className: 'text-red-500',
-    variant: 'destructive' as 'destructive',
+    label: 'Delete',
+    action: (id: string) => console.log('Delete customer', id),
+    type: 'button',
+    color: 'red',
+    variant: 'outline' as
+      | 'default'
+      | 'destructive'
+      | 'outline'
+      | 'secondary'
+      | 'ghost'
+      | 'link'
+      | null,
+    link: '/delete',
   },
 ];
 
-// Pagination settings
-const PAGE_SIZE = 8;
+export default function CustomerList({
+  customers,
+  currentPage,
+  totalPages,
+  totalElements,
+}: CustomerListProps) {
+  const router = useRouter();
 
-export default function CustomerList({ customers }: CustomerListProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Filter customers based on search
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
-
-  // Get customers for the current page
-  const currentCustomers = filteredCustomers.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
-
-  // Handle page change
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    router.push(`/customers?page=${page}`);
   };
 
   return (
     <Card className="shadow-lg">
       <CardHeader className="border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold">
-            Customers Overview
-          </CardTitle>
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search customers..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e: any) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
+        <CardTitle className="text-2xl font-bold">Customers Overview</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         <div className="rounded-lg border shadow-sm">
@@ -97,7 +84,7 @@ export default function CustomerList({ customers }: CustomerListProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentCustomers.map((c) => (
+              {customers.map((c) => (
                 <TableRow
                   key={c.id}
                   className="hover:bg-muted/50 transition-colors"
@@ -108,8 +95,8 @@ export default function CustomerList({ customers }: CustomerListProps) {
                   <TableCell>{c.email}</TableCell>
                   <TableCell className="flex flex-row gap-2 flex-wrap justify-center">
                     {operationItems.map((item) => (
-                      <Button key={item.title} variant={item.variant} asChild>
-                        <Link href={`${item.href}/${c.id}`}>{item.title}</Link>
+                      <Button key={item.label} variant={item.variant} asChild>
+                        <Link href={`${item.link}/${c.id}`}>{item.label}</Link>
                       </Button>
                     ))}
                   </TableCell>
@@ -121,16 +108,16 @@ export default function CustomerList({ customers }: CustomerListProps) {
 
         <div className="mt-6 flex items-center justify-between px-2">
           <div className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * PAGE_SIZE + 1} to{' '}
-            {Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} of{' '}
-            {filteredCustomers.length} customers
+            Showing {currentPage * 10 + 1} to{' '}
+            {Math.min((currentPage + 1) * 10, totalElements)} of {totalElements}{' '}
+            customers
           </div>
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              disabled={currentPage === 0}
               className="hover:bg-muted"
             >
               Previous
@@ -138,12 +125,12 @@ export default function CustomerList({ customers }: CustomerListProps) {
             <div className="flex gap-2">
               {[...Array(totalPages)].map((_, i) => (
                 <Button
-                  key={i + 1}
-                  variant={currentPage === i + 1 ? 'default' : 'outline'}
+                  key={i}
+                  variant={currentPage === i ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => handlePageChange(i + 1)}
+                  onClick={() => handlePageChange(i)}
                   className={`h-8 w-8 ${
-                    currentPage === i + 1
+                    currentPage === i
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-muted'
                   }`}
@@ -156,7 +143,7 @@ export default function CustomerList({ customers }: CustomerListProps) {
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages - 1}
               className="hover:bg-muted"
             >
               Next

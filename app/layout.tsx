@@ -33,6 +33,11 @@ const menuItems: { title: string; href: string; icon: React.ReactNode }[] = [
     href: '/accounts',
     icon: <Wallet className="w-4 h-4 mr-2" />,
   },
+  {
+    title: 'About',
+    href: '/about',
+    icon: <Building2 className="w-4 h-4 text-muted-foreground" />,
+  },
 ];
 
 export default function RootLayout({
